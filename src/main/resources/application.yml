@@ -1,0 +1,25 @@
+jwt:
+  secret:'[a-zA-Z0-9._]^+$guidelines89797987forAlphabeticalArraNumeralsandOtherSymbo$'
+
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  datasource:
+    password: "123456"
+    url: jdbc:postgresql://localhost:5432/AVA
+    username: "postgres"
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  batch:
+    jdbc:
+      initialize-schema: always
+
