@@ -149,44 +149,71 @@ public class ExportAvaService {
             document.add(paragraph);
             document.add(Chunk.NEWLINE);
 
-            PdfPTable table = new PdfPTable(4);
+            PdfPTable table = new PdfPTable(6);
 
-            Stream.of("Ref","Num Client","Type AVA" ,"creation").forEach(headerTitle -> {
+            Stream.of("Ref","Nom Client","Type AVA" ,"Droit à transfert", "Num autorisation","creation").forEach(headerTitle -> {
                 PdfPCell header = new PdfPCell();
                 com.itextpdf.text.Font headFont = FontFactory.getFont(FontFactory.COURIER_BOLD);
                 header.setBackgroundColor(BaseColor.LIGHT_GRAY);
                 header.setHorizontalAlignment(Element.ALIGN_CENTER);
                 header.setBorderWidth(1);
                 header.setPadding(10);
+                header.setPaddingLeft(5);
+                header.setPaddingRight(5);
                 header.setPhrase(new Phrase(headerTitle ,headFont));
                 table.addCell(header);
             });
 
             for (Ava ava:avas) {
+                if (ava.getClient()!=null){
                 PdfPCell refCell = new PdfPCell(new Phrase(ava.getReferenceDossierAVA()));
                 refCell.setPadding(10);
+                refCell.setPaddingLeft(5);
+                refCell.setPaddingRight(5);
                 refCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
                 refCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(refCell);
 
-                PdfPCell ClientCell = new PdfPCell(new Phrase(ava.getIdClient() ));
+                PdfPCell ClientCell = new PdfPCell(new Phrase(ava.getClient().getFirstName() ));
                 ClientCell.setPadding(10);
+                ClientCell.setPaddingLeft(5);
+                ClientCell.setPaddingRight(5);
                 ClientCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
                 ClientCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(ClientCell);
 
                 PdfPCell TypeCell = new PdfPCell(new Phrase(ava.getAvaType() ));
                 TypeCell.setPadding(10);
+                TypeCell.setPaddingLeft(5);
+                TypeCell.setPaddingRight(5);
                 TypeCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
                 TypeCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(TypeCell);
 
+                PdfPCell DatCell = new PdfPCell(new Phrase(ava.getDat().toString() ));
+                DatCell.setPadding(10);
+                DatCell.setPaddingLeft(5);
+                DatCell.setPaddingRight(5);
+                DatCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                DatCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(DatCell);
+
+                PdfPCell NumCell = new PdfPCell(new Phrase(ava.getNumAutorBct().toString() ));
+                NumCell.setPadding(10);
+                NumCell.setPaddingLeft(5);
+                NumCell.setPaddingRight(5);
+                NumCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                NumCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(NumCell);
+
                 PdfPCell ValiditeCell = new PdfPCell(new Phrase(String.valueOf(ava.getDateCreation()).substring(0,10)));
                 ValiditeCell.setPadding(10);
+                ValiditeCell.setPaddingLeft(5);
+                ValiditeCell.setPaddingRight(5);
                 ValiditeCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
                 ValiditeCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(ValiditeCell);
-
+                }
             }
             document.add(table);
             document.close();

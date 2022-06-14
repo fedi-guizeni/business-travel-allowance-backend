@@ -1,5 +1,6 @@
 package com.pfe22.ava.Service.implementation;
 
+import com.pfe22.ava.Service.LoginAttemptService;
 import com.pfe22.ava.entities.AppUsers.User;
 import com.pfe22.ava.entities.AppUsers.Userprincipal;
 import com.pfe22.ava.Service.EmailService;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.mail.MessagingException;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 import static com.pfe22.ava.enumeration.Role.ROLE_USER;
@@ -41,12 +43,18 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
     private UserRepository userRepository ;
     private BCryptPasswordEncoder passwordEncoder;
     private EmailService emailService;
+    private LoginAttemptService loginAttemptService;
 
     @Autowired
-    public UserServiceImplementation(UserRepository userRepository ,BCryptPasswordEncoder passwordEncoder  ,EmailService emailService) {
+    public UserServiceImplementation(UserRepository userRepository ,
+                                     BCryptPasswordEncoder passwordEncoder  ,
+                                     EmailService emailService,
+                                     LoginAttemptService loginAttemptService
+                                     ) {
         this.userRepository = userRepository;
         this.passwordEncoder= passwordEncoder;
         this.emailService= emailService;
+        this.loginAttemptService=loginAttemptService;
     }
 
     @Override
@@ -58,6 +66,7 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
             throw new UsernameNotFoundException("User not found by username : "+username);
 
         }else {
+            ValidateLoginAttempt(user);
             user.setLastLoginDateDisplay(user.getLastLoginDate());
             user.setLastLoginDate(new Date());
             userRepository.save(user);
@@ -67,6 +76,18 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
         }
 
 
+    }
+
+    private void ValidateLoginAttempt(User user)  {
+        if (user.isNotLocked()){
+            if (loginAttemptService.hasExceededMaxAttempts(user.getUsername())){
+                user.setNotLocked(false);
+            }else {
+                user.setNotLocked(true);
+            }
+        }else {
+            loginAttemptService.evicUserFromLoginAttemptCache(user.getUsername());
+        }
     }
 
     @Override
@@ -155,7 +176,7 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
     }
 
     @Override
-    public User addNewUser(String firstName, String lastname, String username, String email, String role, boolean isnonLocked, boolean isActive) throws UserNotFoundException, EmailExistException, UsernameExistException {
+    public User addNewUser(String firstName, String lastname, String username, String email, String role, boolean isnonLocked, boolean isActive) throws UserNotFoundException, EmailExistException, UsernameExistException, MessagingException {
         validateNewUsernameAndEmail(StringUtils.EMPTY , username , email);
         User user = new User();
         String password = generatePassword();
@@ -172,6 +193,7 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
         user.setRole(getRoleEnumName(role).name());
         user.setAuthorities(getRoleEnumName(role).getAuthorities());
         LOGGER.info("new user password" +password);
+        emailService.SendNewPasswordEmail(firstName,password,email);
         userRepository.save(user);
 
         return user;
@@ -221,6 +243,7 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
         }
         String password = generatePassword();
         user.setPassword(encodePassword(password));
+        LOGGER.info("new user password" +password);
         userRepository.save(user);
         emailService.SendNewPasswordEmail(user.getFirstName(), password , user.getEmail());
 

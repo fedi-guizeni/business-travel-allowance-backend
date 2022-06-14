@@ -33,7 +33,7 @@ public class Ava implements Serializable {
     private Date dateCloture;
     private String compteDebit;
     private String activiteBct;
-    private  String caht;
+    private Float caht;
     private Float dat;
     private String observation;
     private String statutDossier;
@@ -49,6 +49,11 @@ public class Ava implements Serializable {
    )
    @JoinColumn(name = "beneficiaries" , referencedColumnName = "id")
    private List<Beneficiary> beneficiaries;
+    @OneToMany(
+            targetEntity = HistoriqueAva.class , cascade = CascadeType.ALL
+    )
+    @JoinColumn(name = "historique" , referencedColumnName = "id")
+    private List<HistoriqueAva> historiqueAvas;
 
     public Ava (){}
 
@@ -67,7 +72,7 @@ public class Ava implements Serializable {
                Date dateCloture,
                String compteDebit,
                String activiteBct,
-               String caht,
+               Float caht,
                Float dat,
                String observation,
                String statutDossier,
@@ -77,7 +82,8 @@ public class Ava implements Serializable {
                Float montantBct,
                User agent,
                Client client,
-               List<Beneficiary> beneficiaries
+               List<Beneficiary> beneficiaries,
+               List<HistoriqueAva> historiqueAvas
                ) {
         this.id = id;
         this.ReferenceDossierAVA = referenceDossierAVA;
@@ -103,6 +109,7 @@ public class Ava implements Serializable {
         this.Agent=agent;
         this.Client=client;
         this.beneficiaries=beneficiaries;
+        this.historiqueAvas=historiqueAvas;
     }
 
     public void setId(Long id) {
@@ -157,7 +164,7 @@ public class Ava implements Serializable {
         this.activiteBct = activiteBct;
     }
 
-    public void setCaht(String caht) {
+    public void setCaht(Float caht) {
         this.caht = caht;
     }
 
@@ -198,6 +205,10 @@ public class Ava implements Serializable {
 
     public void setBeneficiaries(List<Beneficiary> beneficiaries) {
         this.beneficiaries = beneficiaries;
+    }
+
+    public void setHistoriqueAvas(List<HistoriqueAva> historiqueAvas) {
+        this.historiqueAvas = historiqueAvas;
     }
 
     public Long getId() {
@@ -252,7 +263,7 @@ public class Ava implements Serializable {
         return activiteBct;
     }
 
-    public String getCaht() {
+    public Float getCaht() {
         return caht;
     }
 
@@ -294,5 +305,9 @@ public class Ava implements Serializable {
 
     public List<Beneficiary> getBeneficiaries() {
         return beneficiaries;
+    }
+
+    public List<HistoriqueAva> getHistoriqueAvas() {
+        return historiqueAvas;
     }
 }

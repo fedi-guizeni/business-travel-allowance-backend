@@ -1,4 +1,4 @@
-package com.pfe22.ava.ressource;
+package com.pfe22.ava.controller;
 
 import com.pfe22.ava.entities.AppUsers.HttpResponse;
 import com.pfe22.ava.entities.AppUsers.User;
@@ -76,7 +76,7 @@ public class UserRessource extends ExceptionHandling {
                                            @RequestParam("email") String email ,
                                            @RequestParam("role") String role ,
                                            @RequestParam("isActive") String isActive ,
-                                           @RequestParam("isNonLocked") String isNonLocked ) throws UserNotFoundException, EmailExistException, UsernameExistException {
+                                           @RequestParam("isNonLocked") String isNonLocked ) throws UserNotFoundException, EmailExistException, UsernameExistException, MessagingException {
 
         User newUser = userService.addNewUser(firstname , lastname , username , email , role , Boolean.parseBoolean(isActive)   , Boolean.parseBoolean(isNonLocked));
         return  new ResponseEntity<>(newUser , HttpStatus.OK) ;

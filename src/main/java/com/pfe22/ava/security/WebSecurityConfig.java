@@ -60,7 +60,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
       http.csrf().disable().cors().and()
               .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
               .and().authorizeRequests().antMatchers(PUBLIC_URLS).permitAll()
-
               .anyRequest().authenticated()
               .and()
               .exceptionHandling().accessDeniedHandler(jwtAcessDeniedHandler)

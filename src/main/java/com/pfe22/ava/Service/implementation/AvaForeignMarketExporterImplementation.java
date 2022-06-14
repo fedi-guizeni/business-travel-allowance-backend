@@ -6,19 +6,14 @@ import com.pfe22.ava.entities.AppUsers.User;
 import com.pfe22.ava.entities.ava.AvaFile.Ava;
 import com.pfe22.ava.entities.ava.AvaFile.AvaForeignMarketExporter;
 import com.pfe22.ava.Service.AvaForeignMarketExporterService;
-import com.pfe22.ava.entities.ava.AvaFile.AvaOtherActivities;
 import com.pfe22.ava.entities.ava.AvaFile.Beneficiary;
+import com.pfe22.ava.entities.ava.AvaFile.HistoriqueAva;
 import com.pfe22.ava.exception.AppUsers.ClientIdExistException;
 import com.pfe22.ava.exception.AppUsers.StatutDossierException;
 import com.pfe22.ava.exception.AppUsers.UsernameExistException;
-import com.pfe22.ava.repository.AvaForeignExporterRepository;
-import com.pfe22.ava.repository.BeneficiaryRepository;
-import com.pfe22.ava.repository.ClientRepository;
+import com.pfe22.ava.repository.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.HibernateException;
-import org.hibernate.NonUniqueResultException;
-import org.hibernate.exception.JDBCConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.mail.MessagingException;
-import javax.persistence.PersistenceException;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,6 +34,8 @@ public class AvaForeignMarketExporterImplementation implements AvaForeignMarketE
     private Logger logger = LoggerFactory.getLogger(getClass());
     private AvaForeignExporterRepository avaForeignExporterRepository ;
     private ClientRepository clientRepository;
+    private UserRepository userRepository;
+    private HistoriqueAvaRepository historiqueAvaRepository;
     private BeneficiaryRepository beneficiaryRepository;
     private EmailService emailService;
 
@@ -48,40 +44,44 @@ public class AvaForeignMarketExporterImplementation implements AvaForeignMarketE
     public AvaForeignMarketExporterImplementation(AvaForeignExporterRepository avaForeignExporterRepository,
                                                   ClientRepository clientRepository,
                                                   BeneficiaryRepository beneficiaryRepository,
+                                                  UserRepository userRepository,
+                                                  HistoriqueAvaRepository historiqueAvaRepository,
                                                   EmailService emailService
                                                   ) {
         this.avaForeignExporterRepository = avaForeignExporterRepository;
         this.clientRepository = clientRepository;
         this.beneficiaryRepository = beneficiaryRepository ;
+        this.userRepository =userRepository;
+        this.historiqueAvaRepository=historiqueAvaRepository;
         this.emailService = emailService;
     }
 
     @Override
     public AvaForeignMarketExporter saveAvaForMEx(
-                                                    String avaType,
-                                                    String idClient,
-                                                    String naturePiece,
-                                                    String numCin,
-                                                    String codeAgence,
-                                                    Date dateValidite,
-                                                    Date finValidite,
-                                                    Date dateCloture,
-                                                    String compteDebit,
-                                                    String activiteBct,
-                                                    String caht,
-                                                    Float dat,
-                                                    String observation,
-                                                    String statutDossier,
-                                                    String statutValidationDossier,
-                                                    Float montantBct,
-                                                    String titulaireMarche,
-                                                    String montantContrat,
-                                                    String devise,
-                                                    Integer numAutorBct,
-                                                    Date dataAutoBct,
-                                                    Date dateContrat
+            String avaType,
+            String idClient,
+            String naturePiece,
+            String numCin,
+            String codeAgence,
+            Date dateValidite,
+            Date finValidite,
+            Date dateCloture,
+            String compteDebit,
+            String activiteBct,
+            Float caht,
+            Float dat,
+            String observation,
+            String statutDossier,
+            String statutValidationDossier,
+            Float montantBct,
+            String titulaireMarche,
+            Float montantContrat,
+            String devise,
+            Integer numAutorBct,
+            Date dataAutoBct,
+            Date dateContrat
                                                      , User agent,
-                                                    List<Beneficiary> beneficiaries) throws ClientIdExistException {
+            List<Beneficiary> beneficiaries) throws ClientIdExistException {
         validateClientId(StringUtils.EMPTY,idClient ,avaType);
         AvaForeignMarketExporter avaForeignMarketExporter = new AvaForeignMarketExporter();
         avaForeignMarketExporter.setReferenceDossierAVA(generateAvaRef());
@@ -99,8 +99,8 @@ public class AvaForeignMarketExporterImplementation implements AvaForeignMarketE
         avaForeignMarketExporter.setCaht(caht);
         avaForeignMarketExporter.setDat(dat);
         avaForeignMarketExporter.setObservation(observation);
-        avaForeignMarketExporter.setStatutDossier(statutDossier);
-        avaForeignMarketExporter.setStatutValidationDossier(statutValidationDossier);
+        avaForeignMarketExporter.setStatutDossier("null");
+        avaForeignMarketExporter.setStatutValidationDossier("null");
         avaForeignMarketExporter.setMontantBct(montantBct);
         avaForeignMarketExporter.setTitulaireMarche(titulaireMarche);
         avaForeignMarketExporter.setMontantContrat(montantContrat);
@@ -111,6 +111,14 @@ public class AvaForeignMarketExporterImplementation implements AvaForeignMarketE
         avaForeignMarketExporter.setAgent(agent);
         avaForeignMarketExporter.setClient(getClient(idClient));
         avaForeignMarketExporter.getBeneficiaries();
+        HistoriqueAva historiqueAva = new HistoriqueAva();
+        historiqueAva.setDateOperation(new Date());
+        historiqueAva.setAgent(agent);
+        historiqueAva.setEtatDossier("creation");
+        List<HistoriqueAva> newHistorique = new ArrayList<>();
+        newHistorique.add(historiqueAva);
+
+        avaForeignMarketExporter.setHistoriqueAvas(newHistorique);
         avaForeignExporterRepository.save(avaForeignMarketExporter);
             return avaForeignMarketExporter;
     }
@@ -127,28 +135,91 @@ public class AvaForeignMarketExporterImplementation implements AvaForeignMarketE
 
     @Override
     public AvaForeignMarketExporter updateAva(String currentIdClient,
-                                        String idClient,
-                                        String newCaht,
-                                        Integer newnumAutorBct,
-                                        Date NewdataAutoBct,
-                                        Float newMontantBct,
-                                        String newObservation,
-                                        String référenceDossierAVA,
-                                        String avaType,
-                                        String naturePiece,
-                                        String numCin,
-                                        String codeAgence,
-                                        Date dateValidite,
-                                        Date finValidite,
-                                        Date dateCloture,
-                                        String compteDebit,
-                                        String activiteBct,
-                                        String statutDossier,
-                                        String statutValidationDossier,
-                                        String titulaireMarche,
-                                        String MontantContrat,
-                                        String Devise,
-                                        Date dateContrat) throws ClientIdExistException, MessagingException {
+                                              String idClient,
+                                              Float newCaht,
+                                              Integer newnumAutorBct,
+                                              Date NewdataAutoBct,
+                                              Float newMontantBct,
+                                              String newObservation,
+                                              String référenceDossierAVA,
+                                              String avaType,
+                                              String naturePiece,
+                                              String numCin,
+                                              String codeAgence,
+                                              Date dateValidite,
+                                              Date finValidite,
+                                              Date dateCloture,
+                                              String compteDebit,
+                                              String activiteBct,
+                                              String statutDossier,
+                                              String statutValidationDossier,
+                                              String titulaireMarche,
+                                              Float MontantContrat,
+                                              String Devise,
+                                              Date dateContrat,
+                                              String agenId) throws ClientIdExistException, MessagingException {
+        AvaForeignMarketExporter avaForeignMarketExporter=validateClientId(currentIdClient,idClient,avaType  );
+        avaForeignMarketExporter.setIdClient(idClient);
+        avaForeignMarketExporter.setCaht(newCaht);
+        avaForeignMarketExporter.setNumAutorBct(newnumAutorBct);
+        avaForeignMarketExporter.setDataAutoBct(NewdataAutoBct);
+        avaForeignMarketExporter.setMontantBct(newMontantBct);
+        avaForeignMarketExporter.setObservation(newObservation);
+        avaForeignMarketExporter.setReferenceDossierAVA(référenceDossierAVA);
+        avaForeignMarketExporter.setAvaType(avaType);
+        avaForeignMarketExporter.setNaturePiece(naturePiece);
+        avaForeignMarketExporter.setNumCin(numCin);
+        avaForeignMarketExporter.setCodeAgence(codeAgence);
+        avaForeignMarketExporter.setDateValidite(dateValidite);
+        avaForeignMarketExporter.setFinValidite(finValidite);
+        avaForeignMarketExporter.setDateCloture(dateCloture);
+        avaForeignMarketExporter.setCompteDebit(compteDebit);
+        avaForeignMarketExporter.setActiviteBct(activiteBct);
+        avaForeignMarketExporter.setStatutDossier("null");
+        avaForeignMarketExporter.setStatutValidationDossier("null");
+        avaForeignMarketExporter.setTitulaireMarche(titulaireMarche);
+        avaForeignMarketExporter.setMontantContrat(MontantContrat);
+        avaForeignMarketExporter.setDevise(Devise);
+        avaForeignMarketExporter.setDateContrat(dateContrat);
+        HistoriqueAva historiqueAva = new HistoriqueAva();
+        historiqueAva.setDateOperation(new Date());
+        historiqueAva.setAgent(findAgentbyId(agenId));
+        historiqueAva.setEtatDossier("Modification");
+        List<HistoriqueAva> newHistorique = new ArrayList<>();
+        newHistorique.add(historiqueAva);
+        List<HistoriqueAva> newHistoriqueList = Stream.concat(avaForeignMarketExporter.getHistoriqueAvas().stream(),
+                        newHistorique.stream())
+                .collect(Collectors.toList());
+        avaForeignMarketExporter.setHistoriqueAvas(newHistoriqueList);
+        avaForeignExporterRepository.save(avaForeignMarketExporter);
+        return avaForeignMarketExporter;
+    }
+
+    @Override
+    public AvaForeignMarketExporter ValidateAva(String currentIdClient,
+                                                String idClient,
+                                                Float newCaht,
+                                                Integer newnumAutorBct,
+                                                Date NewdataAutoBct,
+                                                Float newMontantBct,
+                                                String newObservation,
+                                                String référenceDossierAVA,
+                                                String avaType,
+                                                String naturePiece,
+                                                String numCin,
+                                                String codeAgence,
+                                                Date dateValidite,
+                                                Date finValidite,
+                                                Date dateCloture,
+                                                String compteDebit,
+                                                String activiteBct,
+                                                String statutDossier,
+                                                String statutValidationDossier,
+                                                String titulaireMarche,
+                                                Float MontantContrat,
+                                                String Devise,
+                                                Date dateContrat,
+                                                String agentId) throws ClientIdExistException, MessagingException {
         AvaForeignMarketExporter avaForeignMarketExporter=validateClientId(currentIdClient,idClient,avaType  );
         avaForeignMarketExporter.setIdClient(idClient);
         avaForeignMarketExporter.setCaht(newCaht);
@@ -172,15 +243,26 @@ public class AvaForeignMarketExporterImplementation implements AvaForeignMarketE
         avaForeignMarketExporter.setMontantContrat(MontantContrat);
         avaForeignMarketExporter.setDevise(Devise);
         avaForeignMarketExporter.setDateContrat(dateContrat);
+        HistoriqueAva historiqueAva = new HistoriqueAva();
+        historiqueAva.setDateOperation(new Date());
+        historiqueAva.setAgent(findAgentbyId(agentId));
+        historiqueAva.setEtatDossier(statutValidationDossier);
+        List<HistoriqueAva> newHistorique = new ArrayList<>();
+        newHistorique.add(historiqueAva);
+        List<HistoriqueAva> newHistoriqueList = Stream.concat(avaForeignMarketExporter.getHistoriqueAvas().stream(),
+                        newHistorique.stream())
+                .collect(Collectors.toList());
+        avaForeignMarketExporter.setHistoriqueAvas(newHistoriqueList);
         avaForeignExporterRepository.save(avaForeignMarketExporter);
-//        if (statutDossier.equals("Active")){
-//            emailService.SendActivatedEmail(
-//                    avaForeignMarketExporter.getClient().getFirstName() ,
-//                    avaForeignMarketExporter.getClient().getLastName(),
-//                    avaForeignMarketExporter.getReferenceDossierAVA(),
-//                    avaForeignMarketExporter.getClient().getEmail() );
-//
-//        }
+        if (statutDossier.equals("Active")){
+            emailService.SendActivatedEmail(
+                    avaForeignMarketExporter.getClient().getFirstName() ,
+                    avaForeignMarketExporter.getClient().getLastName(),
+                    avaForeignMarketExporter.getAvaType(),
+                    avaForeignMarketExporter.getReferenceDossierAVA(),
+                    avaForeignMarketExporter.getClient().getEmail() );
+
+        }
         return avaForeignMarketExporter;
 
 
@@ -190,18 +272,19 @@ public class AvaForeignMarketExporterImplementation implements AvaForeignMarketE
     @Override
     public AvaForeignMarketExporter renewalAva(String currentIdClient,
                                                String avaType,
-                                         String idClient,
-                                         String newCaht,
-                                         Integer newnumAutorBct,
-                                         Date NewdataAutoBct,
-                                         Float newMontantBct,
+                                               String idClient,
+                                               Float newCaht,
+                                               Integer newnumAutorBct,
+                                               Date NewdataAutoBct,
+                                               Float newMontantBct,
 
-                                         Date dateValidite,
-                                         Date finValidite,
+                                               Date dateValidite,
+                                               Date finValidite,
 
                                                Float dat,
-                                         String statutDossier,
-                                         String statutValidationDossier
+                                               String statutDossier,
+                                               String statutValidationDossier,
+                                               String agentId
                                         ) throws StatutDossierException {
         AvaForeignMarketExporter avaForeignMarketExporter=validateStatutDossier(currentIdClient,idClient,avaType);
         avaForeignMarketExporter.setIdClient(idClient);
@@ -212,16 +295,28 @@ public class AvaForeignMarketExporterImplementation implements AvaForeignMarketE
         avaForeignMarketExporter.setDateValidite(dateValidite);
         avaForeignMarketExporter.setFinValidite(finValidite);
         avaForeignMarketExporter.setDat(dat);
-        avaForeignMarketExporter.setStatutDossier(null);
-        avaForeignMarketExporter.setStatutValidationDossier(null);
+        avaForeignMarketExporter.setStatutDossier("null");
+        avaForeignMarketExporter.setStatutValidationDossier("null");
+        HistoriqueAva historiqueAva = new HistoriqueAva();
+        historiqueAva.setDateOperation(new Date());
+        historiqueAva.setAgent(findAgentbyId(agentId));
+        historiqueAva.setEtatDossier("renouvellement");
+        List<HistoriqueAva> newHistorique = new ArrayList<>();
+        newHistorique.add(historiqueAva);
+        List<HistoriqueAva> newHistoriqueList = Stream.concat(avaForeignMarketExporter.getHistoriqueAvas().stream(),
+                        newHistorique.stream())
+                .collect(Collectors.toList());
+        avaForeignMarketExporter.setHistoriqueAvas(newHistoriqueList);
         avaForeignExporterRepository.save(avaForeignMarketExporter);
         return avaForeignMarketExporter;
     }
 
     @Override
     public AvaForeignMarketExporter addBenef(List<Beneficiary> beneficiaries,
-                                             String clientid) throws UsernameExistException {
-        AvaForeignMarketExporter avaForeignMarketExporter =findByClientId(clientid);
+                                             String clientid,
+                                             String typeAva
+                                             ) throws UsernameExistException {
+        AvaForeignMarketExporter avaForeignMarketExporter = (AvaForeignMarketExporter) findAvasByIdClientByIdClient(typeAva,clientid);
         int j = 0 ;
         boolean verify=false ;
         for (Beneficiary b:beneficiaries  ){
@@ -319,6 +414,10 @@ public class AvaForeignMarketExporterImplementation implements AvaForeignMarketE
 
         return null;
     }
+    private User findAgentbyId(String id){
+        return userRepository.findUserByUserId(id);
+    }
+
     private String generateAvaRef() {
         return RandomStringUtils.randomNumeric(10);
     }

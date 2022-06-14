@@ -4,16 +4,10 @@ package com.pfe22.ava.Service.implementation;
 import com.pfe22.ava.Service.EmailService;
 import com.pfe22.ava.entities.AppUsers.Client;
 import com.pfe22.ava.entities.AppUsers.User;
-import com.pfe22.ava.entities.ava.AvaFile.Ava;
-import com.pfe22.ava.entities.ava.AvaFile.AvaForeignMarketExporter;
-import com.pfe22.ava.entities.ava.AvaFile.AvaOtherActivities;
+import com.pfe22.ava.entities.ava.AvaFile.*;
 import com.pfe22.ava.Service.AvaOtherActService;
-import com.pfe22.ava.entities.ava.AvaFile.Beneficiary;
 import com.pfe22.ava.exception.AppUsers.*;
-import com.pfe22.ava.repository.AvaOtherActRepository;
-import com.pfe22.ava.repository.BeneficiaryRepository;
-import com.pfe22.ava.repository.ClientRepository;
-import com.pfe22.ava.repository.UserRepository;
+import com.pfe22.ava.repository.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -28,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -43,6 +38,7 @@ public class AvaOtherActImplementation implements AvaOtherActService {
     private UserRepository userRepository;
     private ClientRepository clientRepository;
     private BeneficiaryRepository beneficiaryRepository;
+    private HistoriqueAvaRepository historiqueAvaRepository;
     private EmailService emailService;
 
     @Autowired
@@ -50,40 +46,43 @@ public class AvaOtherActImplementation implements AvaOtherActService {
                                      UserRepository userRepository ,
                                      ClientRepository clientRepository,
                                      BeneficiaryRepository beneficiaryRepository,
+                                     HistoriqueAvaRepository historiqueAvaRepository,
                                      EmailService emailService) {
         this.avaOtherActRepository = avaOtherActRepository;
         this.userRepository= userRepository;
         this.clientRepository=clientRepository;
         this.beneficiaryRepository=beneficiaryRepository;
+        this.historiqueAvaRepository=historiqueAvaRepository;
         this.emailService= emailService;
     }
 
 
     @Override
     public AvaOtherActivities saveAvaOtherAct(
-                                              String avaType,
-                                              String idClient,
-                                              String naturePiece,
-                                              String numCin,
-                                              String codeAgence,
-                                              Date dateValidite,
-                                              Date finValidite,
-                                              Date dateCloture,
-                                              String compteDebit,
-                                              String activiteBct,
-                                              String caht,
-                                              Float dat,
-                                              String observation,
-                                              String statutDossier,
-                                              String statutValidationDossier,
-                                              Integer numAutorBct,
-                                              Date dataAutoBct,
-                                              Float montantBct,
-                                              String nompromoteurProjet,
-                                              Date dateDeclarationFiscale,
-                                              String referenceFiscale ,
-                                              User agent,
-                                              List<Beneficiary> beneficiaries
+            String avaType,
+            String idClient,
+            String naturePiece,
+            String numCin,
+            String codeAgence,
+            Date dateValidite,
+            Date finValidite,
+            Date dateCloture,
+            String compteDebit,
+            String activiteBct,
+            Float caht,
+            Float dat,
+            String observation,
+            String statutDossier,
+            String statutValidationDossier,
+            Integer numAutorBct,
+            Date dataAutoBct,
+            Float montantBct,
+            String nompromoteurProjet,
+            Date dateDeclarationFiscale,
+            String referenceFiscale ,
+            User agent,
+            List<Beneficiary> beneficiaries,
+            List<HistoriqueAva> historiqueAvas
 
                                              ) throws ClientIdExistException {
         validateClientId(StringUtils.EMPTY,idClient,avaType);
@@ -103,8 +102,8 @@ public class AvaOtherActImplementation implements AvaOtherActService {
         avaOtherActivities.setCaht(caht);
         avaOtherActivities.setDat(dat);
         avaOtherActivities.setObservation(observation);
-        avaOtherActivities.setStatutDossier(statutDossier);
-        avaOtherActivities.setStatutValidationDossier(statutValidationDossier);
+        avaOtherActivities.setStatutDossier("null");
+        avaOtherActivities.setStatutValidationDossier("null");
         avaOtherActivities.setNumAutorBct(numAutorBct);
         avaOtherActivities.setDataAutoBct(dataAutoBct);
         avaOtherActivities.setMontantBct(montantBct);
@@ -114,6 +113,14 @@ public class AvaOtherActImplementation implements AvaOtherActService {
         avaOtherActivities.setAgent(agent);
         avaOtherActivities.setClient(getClient(idClient));
         avaOtherActivities.setBeneficiaries(beneficiaries);
+        HistoriqueAva historiqueAva = new HistoriqueAva();
+        historiqueAva.setDateOperation(new Date());
+        historiqueAva.setAgent(agent);
+        historiqueAva.setEtatDossier("creation");
+        List<HistoriqueAva> newHistorique = new ArrayList<>();
+        newHistorique.add(historiqueAva);
+
+        avaOtherActivities.setHistoriqueAvas(newHistorique);
         avaOtherActRepository.save(avaOtherActivities);
         return avaOtherActivities;
     }
@@ -135,12 +142,12 @@ public class AvaOtherActImplementation implements AvaOtherActService {
     @Override
     public AvaOtherActivities updateAva(String currentIdClient,
                                         String idClient,
-                                         String newCaht,
-                                         Integer newnumAutorBct,
-                                         Date NewdataAutoBct,
-                                         Float newMontantBct,
+                                        Float newCaht,
+                                        Integer newnumAutorBct,
+                                        Date NewdataAutoBct,
+                                        Float newMontantBct,
                                         Date newDateDeclarationFiscale,
-                                         String newReferenceFiscale,
+                                        String newReferenceFiscale,
                                         String newObservation,
                                         String référenceDossierAVA,
                                         String avaType,
@@ -154,7 +161,69 @@ public class AvaOtherActImplementation implements AvaOtherActService {
                                         String activiteBct,
                                         String statutDossier,
                                         String statutValidationDossier,
-                                        String nompromoteurProjet) throws ClientIdExistException, MessagingException {
+                                        String nompromoteurProjet,
+                                        String agentId) throws ClientIdExistException, MessagingException {
+        AvaOtherActivities currentAvaOtherActivities = validateClientId(currentIdClient,idClient,avaType);
+        currentAvaOtherActivities.setIdClient(idClient);
+        currentAvaOtherActivities.setCaht(newCaht);
+        currentAvaOtherActivities.setNumAutorBct(newnumAutorBct);
+        currentAvaOtherActivities.setDataAutoBct(NewdataAutoBct);
+        currentAvaOtherActivities.setMontantBct(newMontantBct);
+        currentAvaOtherActivities.setDateDeclarationFiscale(newDateDeclarationFiscale);
+        currentAvaOtherActivities.setReferenceFiscale(newReferenceFiscale);
+        currentAvaOtherActivities.setObservation(newObservation);
+        currentAvaOtherActivities.setReferenceDossierAVA(référenceDossierAVA);
+        currentAvaOtherActivities.setAvaType(avaType);
+        currentAvaOtherActivities.setNaturePiece(naturePiece);
+        currentAvaOtherActivities.setNumCin(numCin);
+        currentAvaOtherActivities.setCodeAgence(codeAgence);
+        currentAvaOtherActivities.setDateValidite(dateValidite);
+        currentAvaOtherActivities.setFinValidite(finValidite);
+        currentAvaOtherActivities.setDateCloture(dateCloture);
+        currentAvaOtherActivities.setCompteDebit(compteDebit);
+        currentAvaOtherActivities.setActiviteBct(activiteBct);
+        currentAvaOtherActivities.setStatutDossier("null");
+        currentAvaOtherActivities.setStatutValidationDossier("null");
+        currentAvaOtherActivities.setNompromoteurProjet(nompromoteurProjet);
+        HistoriqueAva historiqueAva = new HistoriqueAva();
+        historiqueAva.setDateOperation(new Date());
+        historiqueAva.setAgent(findAgentbyId(agentId));
+        historiqueAva.setEtatDossier("Modification");
+        List<HistoriqueAva> newHistorique = new ArrayList<>();
+        newHistorique.add(historiqueAva);
+        List<HistoriqueAva> newHistoriqueList = Stream.concat(currentAvaOtherActivities.getHistoriqueAvas().stream(),
+                        newHistorique.stream())
+                .collect(Collectors.toList());
+        currentAvaOtherActivities.setHistoriqueAvas(newHistoriqueList);
+        avaOtherActRepository.save(currentAvaOtherActivities);
+
+        return currentAvaOtherActivities;
+    }
+
+    @Override
+    public AvaOtherActivities validateAva(String currentIdClient,
+                                          String idClient,
+                                          Float newCaht,
+                                          Integer newnumAutorBct,
+                                          Date NewdataAutoBct,
+                                          Float newMontantBct,
+                                          Date newDateDeclarationFiscale,
+                                          String newReferenceFiscale,
+                                          String newObservation,
+                                          String référenceDossierAVA,
+                                          String avaType,
+                                          String naturePiece,
+                                          String numCin,
+                                          String codeAgence,
+                                          Date dateValidite,
+                                          Date finValidite,
+                                          Date dateCloture,
+                                          String compteDebit,
+                                          String activiteBct,
+                                          String statutDossier,
+                                          String statutValidationDossier,
+                                          String nompromoteurProjet,
+                                          String agentId) throws ClientIdExistException, MessagingException {
         AvaOtherActivities currentAvaOtherActivities = validateClientId(currentIdClient,idClient,avaType);
         currentAvaOtherActivities.setIdClient(idClient);
         currentAvaOtherActivities.setCaht(newCaht);
@@ -177,7 +246,20 @@ public class AvaOtherActImplementation implements AvaOtherActService {
         currentAvaOtherActivities.setStatutDossier(statutDossier);
         currentAvaOtherActivities.setStatutValidationDossier(statutValidationDossier);
         currentAvaOtherActivities.setNompromoteurProjet(nompromoteurProjet);
-        //emailService.SendActivatedEmail(currentAvaOtherActivities.getClient().getFirstName() , currentAvaOtherActivities.getReferenceDossierAVA() ,currentAvaOtherActivities.getClient().getEmail() );
+        if ( statutDossier.equals("Active")){emailService.SendActivatedEmail(currentAvaOtherActivities.getClient().getFirstName() ,currentAvaOtherActivities.getClient().getLastName(),
+                currentAvaOtherActivities.getAvaType(),
+                currentAvaOtherActivities.getReferenceDossierAVA() ,currentAvaOtherActivities.getClient().getEmail() );
+        }
+        HistoriqueAva historiqueAva = new HistoriqueAva();
+        historiqueAva.setDateOperation(new Date());
+        historiqueAva.setAgent(findAgentbyId(agentId));
+        historiqueAva.setEtatDossier(statutValidationDossier);
+        List<HistoriqueAva> newHistorique = new ArrayList<>();
+        newHistorique.add(historiqueAva);
+        List<HistoriqueAva> newHistoriqueList = Stream.concat(currentAvaOtherActivities.getHistoriqueAvas().stream(),
+                        newHistorique.stream())
+                .collect(Collectors.toList());
+        currentAvaOtherActivities.setHistoriqueAvas(newHistoriqueList);
         avaOtherActRepository.save(currentAvaOtherActivities);
 
         return currentAvaOtherActivities;
@@ -187,7 +269,7 @@ public class AvaOtherActImplementation implements AvaOtherActService {
     public AvaOtherActivities renewalAva(String  currentIdClient,
                                          String avaType,
                                          String référenceDossierAVA ,
-                                         String caht,
+                                         Float caht,
                                          Date dateValidite,
                                          Date finValidite,
                                          Integer numAutoBct,
@@ -197,7 +279,8 @@ public class AvaOtherActImplementation implements AvaOtherActService {
                                          Date dateDeclarationFiscale,
                                          Float dat,
                                          String observation,
-                                         String statutDossier
+                                         String statutDossier,
+                                         String agentId
                                          ) throws  StatutDossierException {
         AvaOtherActivities currentAvaOtherActivities = validateStatutDossier(currentIdClient,idClient,avaType );
         currentAvaOtherActivities.setReferenceDossierAVA(référenceDossierAVA);
@@ -211,16 +294,27 @@ public class AvaOtherActImplementation implements AvaOtherActService {
         currentAvaOtherActivities.setDateDeclarationFiscale(dateDeclarationFiscale);
         currentAvaOtherActivities.setDat(dat);
         currentAvaOtherActivities.setObservation(observation);
-        currentAvaOtherActivities.setStatutDossier(null);
-        currentAvaOtherActivities.setStatutValidationDossier(null);
+        currentAvaOtherActivities.setStatutDossier("null");
+        currentAvaOtherActivities.setStatutValidationDossier("null");
+        HistoriqueAva historiqueAva = new HistoriqueAva();
+        historiqueAva.setDateOperation(new Date());
+        historiqueAva.setAgent(findAgentbyId(agentId));
+        historiqueAva.setEtatDossier("renouvellement");
+        List<HistoriqueAva> newHistorique = new ArrayList<>();
+        newHistorique.add(historiqueAva);
+        List<HistoriqueAva> newHistoriqueList = Stream.concat(currentAvaOtherActivities.getHistoriqueAvas().stream(),
+                        newHistorique.stream())
+                .collect(Collectors.toList());
+        currentAvaOtherActivities.setHistoriqueAvas(newHistoriqueList);
         avaOtherActRepository.save(currentAvaOtherActivities);
         return currentAvaOtherActivities;
     }
 
     @Override
     public AvaOtherActivities addBenef(List<Beneficiary> beneficiaries,
-                                       String clientid) throws UsernameExistException {
-        AvaOtherActivities avaOtherActivities =findByClientId(clientid);
+                                       String clientid,
+                                       String typeAva) throws UsernameExistException {
+        AvaOtherActivities avaOtherActivities = (AvaOtherActivities) findAvasByIdClientByIdClient(typeAva,clientid);
         int j = 0 ;
         boolean verify=false ;
         for (Beneficiary b:beneficiaries  ){
@@ -265,7 +359,7 @@ public class AvaOtherActImplementation implements AvaOtherActService {
 
     @Override
     public List<Ava> avalistForBranch() {
-        return avaOtherActRepository.findAllByStatutValidationDossier(null);
+        return avaOtherActRepository.findAllByStatutValidationDossier("null");
     }
 
     @Override
@@ -350,6 +444,9 @@ public class AvaOtherActImplementation implements AvaOtherActService {
     }
     public Beneficiary findBeneficiaryByIdBenef(String idBenef) {
         return beneficiaryRepository.findBeneficiaryByIdBenef(idBenef);
+    }
+    private User findAgentbyId(String id){
+        return userRepository.findUserByUserId(id);
     }
 
     public static Date getFirstDateOfMonth(Date date){

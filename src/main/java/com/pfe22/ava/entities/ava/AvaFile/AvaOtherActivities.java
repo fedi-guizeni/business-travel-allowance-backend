@@ -21,8 +21,8 @@ public class AvaOtherActivities extends Ava{
 
 
 
-    public AvaOtherActivities(Long id, String referenceDossierAVA, String avaType, String idClient, String naturePiece, String numCin, String codeAgence, Date dateCreation, Date dateValidite, Date finValidite, Date dateCloture, String compteDebit, String activiteBct, String caht, Float dat, String observation, String statutDossier, String statutValidationDossier, Integer numAutorBct, Date dataAutoBct, Float montantBct, User agent , Client client , List<Beneficiary> beneficiaries, String nompromoteurProjet, Date dateDeclarationFiscale, String referenceFiscale) {
-        super(id, referenceDossierAVA, avaType, idClient, naturePiece, numCin, codeAgence, dateCreation, dateValidite, finValidite, dateCloture, compteDebit, activiteBct, caht, dat, observation, statutDossier, statutValidationDossier, numAutorBct, dataAutoBct, montantBct , agent,client ,beneficiaries);
+    public AvaOtherActivities(Long id, String referenceDossierAVA, String avaType, String idClient, String naturePiece, String numCin, String codeAgence, Date dateCreation, Date dateValidite, Date finValidite, Date dateCloture, String compteDebit, String activiteBct, Float caht, Float dat, String observation, String statutDossier, String statutValidationDossier, Integer numAutorBct, Date dataAutoBct, Float montantBct, User agent , Client client , List<Beneficiary> beneficiaries, String nompromoteurProjet, Date dateDeclarationFiscale, String referenceFiscale,List<HistoriqueAva> historiqueAvas) {
+        super(id, referenceDossierAVA, avaType, idClient, naturePiece, numCin, codeAgence, dateCreation, dateValidite, finValidite, dateCloture, compteDebit, activiteBct, caht, dat, observation, statutDossier, statutValidationDossier, numAutorBct, dataAutoBct, montantBct , agent,client ,beneficiaries ,historiqueAvas);
         this.NompromoteurProjet = nompromoteurProjet;
         this.dateDeclarationFiscale = dateDeclarationFiscale;
         this.referenceFiscale = referenceFiscale;
