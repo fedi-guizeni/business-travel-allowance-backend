@@ -51,4 +51,11 @@ In this link, you can find the front-end (Angular) application repository  [busi
 ## Application demonstration
 Here you'll find a video demonstration of the application .
 
+## The End
+In the end, I hope you enjoyed the application and find it useful, as I did when I was developing it. If you would like to enhance, please:
+Open PRs,
+Give feedback,
+Add new suggestions, and
+Finally, give it a 🌟.
+
 
